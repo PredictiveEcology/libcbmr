@@ -1,0 +1,4 @@
+[submodule "inst/python/libcbm"]
+	path = inst/python/libcbm
+	url = https://github.com/cat-cfs/libcbm_py
+	branch = cbm_exn
