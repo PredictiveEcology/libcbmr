@@ -1,0 +1,34 @@
+Package: libcbmr
+Title: Interface to the Carbon Budget Model Library Based on CBM-CFS3
+Version: 0.0.0.9000
+Authors@R: c(
+    person("Scott", "Morken", email = "scott.morken@nrcan-rncan.gc.ca", role = c("aut")),
+    person("Celine", "Boisvenue", email = "celine.boisvenue@nrcan-rncan.gc.ca", role = c("aut")),
+    person("Alex M", "Chubaty", email = "achubaty@for-cast.ca", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0001-7146-8135")),
+    person("Eliot", "McIntire", email = "eliot.mcintire@nrcan-rncan.gc.ca", role = c("aut"))
+    )
+Description: Provides wrappers for working with 'libcbm_py' in R.
+URL:
+    https://libcbmr.predictiveecology.org/,
+    https://github.com/PredictiveEcology/libcbmr
+Depends: R (>= 4.0)
+Imports:
+    reticulate
+Suggests:
+    covr,
+    knitr,
+    rmarkdown,
+    testthat
+Language: en-CA
+License: MPL-2.0 + file(LICENSE)
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.1
+VignetteBuilder: knitr
+Config/reticulate:
+  list(
+    packages = list(
+      list(package = "libcbm")
+    )
+  )
