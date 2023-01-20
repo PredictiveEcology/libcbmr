@@ -13,6 +13,20 @@ NULL
 .onLoad <- function(libname, pkgname) {
   reticulate::configure_environment(pkgname)
 
-  py_path <- system.file("python", package = "libcbmr")
-  .globals$libcbm <<- reticulate::import_from_path("libcbm", path = py_path, delay_load = TRUE)
+  # py_path <- system.file("python", package = "libcbmr")
+  # .globals$libcbm <<- reticulate::import_from_path("libcbm", path = py_path, delay_load = TRUE)
+  # .globals$cbm_exn_model <<- reticulate::import_from_path("libcbm.model.cbm_exn.cbm_exn_model", path = py_path, delay_load = TRUE)
+  # .globals$libcbm_resources <<- reticulate::import_from_path("libcbm.resources", path = py_path, delay_load = TRUE)
+  # .globals$cbm_variables <<- reticulate::import_from_path("libcbm.model.model_definition.cbm_variables", path = py_path, delay_load = TRUE)
+  # .globals$output_processor <<- reticulate::import_from_path("libcbm.model.model_definition.output_processor", path = py_path, delay_load = TRUE)
+
+  .globals$libcbm <<- import("libcbm", delay_load = TRUE)
+  # .globals$libcbm$cbm_exn_model <<- import("libcbm.model.cbm_exn.cbm_exn_model", delay_load = TRUE)
+  # .globals$libcbm$libcbm_resources <<- import("libcbm.resources", delay_load = TRUE)
+  # .globals$libcbm$cbm_variables <<- import("libcbm.model.model_definition.cbm_variables", delay_load = TRUE)
+  # .globals$libcbm$model_variables <<- import("libcbm.model.model_definition.model_variables", delay_load = TRUE)
+  # .globals$libcbm$output_processor <<- import("libcbm.model.model_definition.output_processor", delay_load = TRUE)
 }
+
+#' @export
+libcbm <- .globals$libcbm

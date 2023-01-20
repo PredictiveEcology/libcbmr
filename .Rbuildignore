@@ -3,10 +3,8 @@
 
 ## libcbm components
 inst/python/libcbm/\.git
-inst/python/libcbm/\.numba_config\.yaml
-inst/python/libcbm/docs/\.buildinfo
-inst/python/libcbm/docs/\.nojekyll
 inst/python/libcbm/\.github
+inst/python/libcbm/\.numba_config\.yaml
 inst/python/libcbm/libcbm/docs
 inst/python/libcbm/libcbm/docsrc
 inst/python/libcbm/libcbm/examples

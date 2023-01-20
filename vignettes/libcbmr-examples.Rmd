@@ -1,0 +1,147 @@
+---
+title: "`libcbmr` usage examples"
+author: "Scott Morken and Alex Chubaty"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{`libcbmr` usage examples}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  echo = TRUE,
+  eval = FALSE
+)
+```
+
+# Usage examples
+
+Additional examples (may not be fully updated and working) can be found here:
+
+- <https://github.com/cat-cfs/libcbm_py/blob/2.x/examples/cbm3_tutorial2.rmd>
+- <https://github.com/cat-cfs/libcbm_py/blob/cbm_exn/examples/model_definition.rmd>
+- <https://github.com/cat-cfs/libcbm_py/blob/2.x/examples/multi_stand_modelling.rmd>
+
+## Example 1
+
+Adapted from: <https://github.com/cat-cfs/libcbm_py/blob/2.x/examples/cbm_exn/cbm_exn_example.rmd>
+
+```{r usage-example1, eval = FALSE}
+library(reticulate)
+library(libcbmr)
+library(plyr)
+
+use_condaenv("r-reticulate")
+
+cbm_exn_model <- import("libcbm.model.cbm_exn.cbm_exn_model")
+libcbm_resources <- import("libcbm.resources")
+model_variables <- import("libcbm.model.model_definition.model_variables")
+output_processor <- import("libcbm.model.model_definition.output_processor")
+
+## TODO: use these modules from the package instead of importing directly
+
+spinup <- function(spinup_input) {
+  # with config_path NULL default CBM-CFS3 derived parameters are used
+  with(cbm_exn_model$initialize(config_path = NULL) %as% cbm, {
+    # the spinup function creates the t=0 cbm_vars
+    # but you can save and or load cbm_vars for each
+    # timestep at the end of spinup point
+    cbm_vars <- cbm$spinup(spinup_input)
+    return(cbm_vars)
+  })
+}
+
+step <- function(cbm_vars) {
+  with(cbm_exn_model$initialize(config_path = NULL) %as% cbm, {
+    cbm_vars <- cbm$step(cbm_vars)
+    return(cbm_vars)
+  })
+}
+
+net_increments <- read.csv(
+  file.path(
+    libcbm_resources$get_test_resources_dir(),
+    "cbm_exn_net_increments",
+    "net_increments.csv"
+  )
+)
+
+colnames(net_increments) <- c("age", "merch_inc", "foliage_inc", "other_inc")
+stand_increments <- NULL
+n_stands <- 1000
+for (i in 0:(n_stands - 1)) { ## indeexing in python starts at zero
+  copied_increments <- data.frame(net_increments)
+  copied_increments <- cbind(data.frame(row_idx = i), copied_increments)
+  stand_increments <- rbind(stand_increments, copied_increments)
+}
+
+spinup_parameters <- data.frame(
+  age = sample(0L:60L, n_stands, replace = TRUE),
+  area = rep(1.0, n_stands),
+  delay = rep(0L, n_stands),
+  return_interval = rep(125L, n_stands),
+  min_rotations = rep(10L, n_stands),
+  max_rotations = rep(30L, n_stands),
+  spatial_unit_id = rep(17L, n_stands), # Ontario/Mixedwood plains
+  species = rep(20L, n_stands), # red pine
+  mean_annual_temperature = rep(2.55, n_stands),
+  historical_disturbance_type = rep(1L, n_stands),
+  last_pass_disturbance_type = rep(1L, n_stands)
+)
+
+## run spinup
+cbm_vars <- spinup(
+  dict(
+    parameters = spinup_parameters,
+    increments = stand_increments
+  )
+)
+
+## run 50 timesteps
+out_processor <- output_processor$ModelOutputProcessor()
+for (t in 1:50) {
+  cbm_vars$parameters$mean_annual_temperature <- 2.55
+  cbm_vars$parameters$disturbance_type <- sample(
+    c(0L, 1L, 4L), n_stands,
+    replace = TRUE, prob = c(0.98, 0.01, 0.01)
+  )
+
+  # look up the original increments and join to the current stand age
+  step_increments <- join(
+    x = data.frame(age = cbm_vars$state$age),
+    y = net_increments,
+    by = "age"
+  )
+
+  # since some of the ages are out of range for the defined
+  # data, set the increments to 0
+  step_increments$merch_inc[is.na(step_increments$merch_inc)] <- 0
+  step_increments$foliage_inc[is.na(step_increments$foliage_inc)] <- 0
+  step_increments$other_inc[is.na(step_increments$other_inc)] <- 0
+
+  # assign the merged increments to the parameters dataframe
+  cbm_vars$parameters$merch_inc <- step_increments$merch_inc
+  cbm_vars$parameters$foliage_inc <- step_increments$foliage_inc
+  cbm_vars$parameters$other_inc <- step_increments$other_inc
+  cbm_vars <- step(cbm_vars)
+
+  out_processor$append_results(t, model_variables$ModelVariables$from_pandas(cbm_vars))
+}
+
+results <- out_processor$get_results()
+
+## convert results to R data.frames
+pools <- results["pools"]$to_pandas()
+flux <- results["flux"]$to_pandas()
+parameters <- results["parameters"]$to_pandas()
+state <- results["state"]$to_pandas()
+
+pools
+
+state
+```
