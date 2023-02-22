@@ -9,7 +9,7 @@ install_libcbm <- function(method = "auto", conda = "auto") {
 
   #use_python(Sys.which("python3"))
   use_condaenv("r-reticulate")
-  lapply(reqs, py_install, method = method, conda = conda)
+  py_install(reqs, method = method, conda = conda)
 
   ## TODO: install via pip; can't install from path
   # py_install("libcbm", method = method, conda = conda)

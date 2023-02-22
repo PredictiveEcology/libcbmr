@@ -74,7 +74,7 @@ net_increments <- read.csv(
 colnames(net_increments) <- c("age", "merch_inc", "foliage_inc", "other_inc")
 stand_increments <- NULL
 n_stands <- 1000
-for (i in 0:(n_stands - 1)) { ## indeexing in python starts at zero
+for (i in 0:(n_stands - 1)) { ## indexing in python starts at zero
   copied_increments <- data.frame(net_increments)
   copied_increments <- cbind(data.frame(row_idx = i), copied_increments)
   stand_increments <- rbind(stand_increments, copied_increments)
@@ -124,7 +124,7 @@ for (t in 1:50) {
   step_increments$foliage_inc[is.na(step_increments$foliage_inc)] <- 0
   step_increments$other_inc[is.na(step_increments$other_inc)] <- 0
 
-  # assign the merged increments to the parameters dataframe
+  # assign the merged increments to the parameters data.frame
   cbm_vars$parameters$merch_inc <- step_increments$merch_inc
   cbm_vars$parameters$foliage_inc <- step_increments$foliage_inc
   cbm_vars$parameters$other_inc <- step_increments$other_inc
