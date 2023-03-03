@@ -5,9 +5,10 @@
 inst/python/libcbm/\.git
 inst/python/libcbm/\.github
 inst/python/libcbm/\.numba_config\.yaml
-inst/python/libcbm/libcbm/docs
-inst/python/libcbm/libcbm/docsrc
-inst/python/libcbm/libcbm/examples
+inst/python/libcbm/docs
+inst/python/libcbm/docs/_static/.gitkeep
+inst/python/libcbm/examples
 inst/python/libcbm/libcbm/resources/libcbm_bin
 inst/python/libcbm/libcbm/resources/test
 inst/python/libcbm/test
+inst/python/libcbm_call_graphs
