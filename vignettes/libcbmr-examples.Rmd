@@ -38,10 +38,10 @@ library(plyr)
 
 use_condaenv("r-reticulate")
 
-cbm_exn_model <- import("libcbm.model.cbm_exn.cbm_exn_model")
-libcbm_resources <- import("libcbm.resources")
-model_variables <- import("libcbm.model.model_definition.model_variables")
-output_processor <- import("libcbm.model.model_definition.output_processor")
+cbm_exn_model <- libcbm_cbm_exn_model()
+libcbm_resources <- libcbm_libcbm_resources()
+model_variables <- libcbm_model_variables()
+output_processor <- libcbm_output_processor()
 
 ## TODO: use these modules from the package instead of importing directly
 
