@@ -13,7 +13,7 @@ install_libcbm <- function(method = "auto", conda = "auto") {
 
   ## TODO: install via pip; can't install from path
   # py_install("libcbm", method = method, conda = conda)
-  system(paste("cd", system.file("python/libcbm", package = "libcbmr"), "&&",
-               Sys.which("pip3"), "install ."),
-         intern = TRUE)
+  cwd <- setwd(system.file("python/libcbm", package = "libcbmr"))
+  on.exit(setwd(cwd), add = TRUE)
+  system(paste(Sys.which("pip3"), "install ."), intern = TRUE)
 }

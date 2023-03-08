@@ -14,6 +14,8 @@ remotes::install_github("PredictiveEcology/libcbmr")
 library(reticulate)
 library(libcbmr)
 
+install_miniconda() ## if not already installed
+
 use_condaenv("r-reticulate")
 
 install_libcbm()
