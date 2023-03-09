@@ -43,8 +43,6 @@ libcbm_resources <- libcbm_libcbm_resources()
 model_variables <- libcbm_model_variables()
 output_processor <- libcbm_output_processor()
 
-## TODO: use these modules from the package instead of importing directly
-
 spinup <- function(spinup_input) {
   # with config_path NULL default CBM-CFS3 derived parameters are used
   with(cbm_exn_model$initialize(config_path = NULL) %as% cbm, {

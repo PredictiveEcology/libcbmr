@@ -40,9 +40,10 @@ if (is.na(condaVersion)) {
 ## install libcbm (python package)
 library(libcbmr)
 
-use_condaenv("r-reticulate")
+envname <- "r-reticulate" ## default used by reticulate
+use_condaenv(envname)
 
-install_libcbm(method = "conda")
+install_libcbm(method = "conda", envname = envname)
 ```
 
 2. Install using pyenv/pyenv-win:
