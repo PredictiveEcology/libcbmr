@@ -4,7 +4,7 @@
 \alias{install_libcbm}
 \title{Install \code{libcbm} python package}
 \usage{
-install_libcbm(method = "auto", conda = "auto")
+install_libcbm(method = "auto", conda = "auto", envname = NULL)
 }
 \arguments{
 \item{method}{Installation method. By default, "auto" automatically finds a
@@ -15,6 +15,11 @@ available on Windows.}
 \item{conda}{The path to a \code{conda} executable. Use \code{"auto"} to allow
 \code{reticulate} to automatically find an appropriate \code{conda} binary.
 See \strong{Finding Conda} and \code{\link[reticulate:conda_binary]{conda_binary()}} for more details.}
+
+\item{envname}{The name, or full path, of the environment in which Python
+packages are to be installed. When \code{NULL} (the default), the active
+environment as set by the \code{RETICULATE_PYTHON_ENV} variable will be used;
+if that is unset, then the \code{r-reticulate} environment will be used.}
 }
 \description{
 Install \code{libcbm} python package

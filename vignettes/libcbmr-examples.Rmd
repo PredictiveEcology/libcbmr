@@ -36,7 +36,7 @@ library(reticulate)
 library(libcbmr)
 library(plyr)
 
-use_condaenv("r-reticulate")
+py_use_env("r-reticulate")
 
 cbm_exn_model <- libcbm_cbm_exn_model()
 libcbm_resources <- libcbm_libcbm_resources()
