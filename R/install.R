@@ -22,17 +22,7 @@ py_use_env <- function(envname = NULL) {
 #' @export
 #' @importFrom utils read.delim
 install_libcbm <- function(method = "auto", conda = "auto", envname = NULL) {
-  reqs <- read.delim(system.file("python/libcbm/requirements.txt", package = "libcbmr"), header = FALSE)[[1]]
-
   cfg <- py_discover_config(use_environment = envname)
-
   py_use_env(envname)
-
-  py_install(reqs, method = method, conda = conda, pip = TRUE) ## NOTE: conda repos inaccessible at PFC
-
-  ## TODO: install via pip; can't install from path
-  # py_install("libcbm", method = method, conda = conda)
-  cwd <- setwd(system.file("python/libcbm", package = "libcbmr"))
-  on.exit(setwd(cwd), add = TRUE)
-  system(paste(shQuote(cfg$python), "-m pip install ."), intern = TRUE)
+  py_install("libcbm", method = method, conda = conda, pip = TRUE) ## NOTE: conda repos inaccessible at PFC
 }
