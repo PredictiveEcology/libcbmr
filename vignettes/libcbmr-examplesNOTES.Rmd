@@ -1,0 +1,213 @@
+---
+title: "`libcbmr` usage examples"
+author: "Scott Morken and Alex Chubaty"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{`libcbmr` usage examples}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  echo = TRUE,
+  eval = FALSE
+)
+```
+
+# Usage examples
+
+Additional examples (may not be fully updated and working) can be found here:
+
+- <https://github.com/cat-cfs/libcbm_py/blob/2.x/examples/cbm3_tutorial2.rmd>
+- <https://github.com/cat-cfs/libcbm_py/blob/cbm_exn/examples/model_definition.rmd>
+- <https://github.com/cat-cfs/libcbm_py/blob/2.x/examples/multi_stand_modelling.rmd>
+
+## Example 1
+
+Adapted from: <https://github.com/cat-cfs/libcbm_py/blob/2.x/examples/cbm_exn/cbm_exn_example.rmd>
+
+```{r usage-example1, eval = FALSE}
+library(reticulate)
+library(libcbmr)
+library(plyr)
+
+py_use_env("r-reticulate")
+
+## These are python-side high level models and structures being read-in
+cbm_exn_model <- libcbm_cbm_exn_model()
+libcbm_resources <- libcbm_libcbm_resources()
+model_variables <- libcbm_model_variables()
+output_processor <- libcbm_output_processor()
+
+##TODO
+## This function is making a cbm object (confirm?). This object will be used as t=0 in
+## annual calculations
+spinup <- function(spinup_input) {
+  # with config_path NULL default CBM-CFS3 derived parameters are used
+  ## assign the config path here for the cbm_exn_model$initialize method. That
+  ## will set a path from where all of the parameters will be read from, and if
+  ## it's not specified it will pull these parameters from
+  ## https://github.com/cat-cfs/libcbm_py/tree/main/libcbm/resources/cbm_exn if
+  ## you make your own directory with these same files you will override the
+  ## defaults.
+  ## GitHub location contains:
+  
+  ## decay_parameters.csv - this is a match to
+  ## outDefaults$cbmData@decayParameters except that the
+  ## outDefaults$cbmData@decayParameters$SoilPoolID (numbers 1 to 11) are named
+  ## in decay_parameters.csv.
+  
+  ## disturburbance_matrix_association.csv(12753X4)  - this is a match to
+  ## outDefaults$cbmData@disturbanceMatrixAssociation (6082X3) plus one column
+  ## named "sw_hw" associating a sw or hw to each diturbance_matrix_id
+  ##TODO why is csv not 2X the cbmData?
+  
+  ## disturbance_matrix_value.csv (14793X4) - this is a match
+  ## outDefaults$cbmData@disturbanceMatrixValues (21339X4) ecept that insteads
+  ## of "ids" (source_pool_id sink_pool_id), the source_pool and sin_pool are
+  ## named in disturbance_matrix_value.csv.
+  
+  ## flux.json file does not have an equivalent in sim$cbmData as it defines the
+  ## fluxes (from where to where). It is probably built in the model_definition
+  ## python module and into the c++ functions in spadesCBM
+  
+  ## pools.json is defined in CBMutils::.pooldef, right now pools.json does not
+  ## have a softwood/hardwood split (fewer pools) then CBMutils::.pooldef, which
+  ## has the CBM-CFS3 pools.
+
+  ## root_parameters.csv (1X8) - this partly matches
+  ## myDefaults$cbmData@rootParameters (48X7). root_parameters.csv has one line
+  ## instead of repeating the same line for all SPUs, and has the
+
+  ## biomass_to_carbon_rate (constant at 0.5) which is here
+  ## myDefaults$cbmData@biomassToCarbonRate in spadesCBM (column names are a bit
+  ## different too)
+  ## SpatialUnitID rb_hw_a rb_sw_a rb_hw_b frp_a frp_b frp_c  versus
+  ## id	hw_a	sw_a	hw_b	frp_a	frp_b	frp_c	biomass_to_carbon_rate
+  
+  ## slow_mixing_rate.csv - this matches
+  ## myDefaults$cbmData@slowAGtoBGTransferRate (which is a matrix not a data
+  ## frame). This value does not vary across Canada.
+  
+  ## species.csv (194X6) - the information on this table is partly in the
+  ## canfi_species.csv we provide with the CBM_vol2biomass module. It is not
+  ## quite the same. Here are the coumn names and I don't know if they match:
+  ## species_id	species_name	genus_id	genus_name	forest_type_id	forest_type_name
+  ## versus
+  ## canfi_species,genus,species,name,forest_type_id
+  ##TODO we might need to check that species match or are we going to inegrate
+  ##these CBM species into the spacies look-up table in LandR?
+  
+  ## turnover_parameters.csv (96X12) - this almost matches this file
+  ## spadesCBMrunsSK$cbmData@turnoverRates (15X13) except that the .csv has
+  ## spatial_unit_id, while cbmData@turnoverRates has EcoBoundaryID, .csv has a
+  ## separate column for sw_hw, and cbmData@turnoverRates has foliage and branch
+  ## columns for each sw and hw.
+  
+  with(cbm_exn_model$initialize(config_path = NULL) %as% cbm, {
+    # the spinup function creates the t=0 cbm_vars
+    # but you can save and or load cbm_vars for each
+    # timestep at the end of spinup point
+    cbm_vars <- cbm$spinup(spinup_input)
+    return(cbm_vars)
+  })
+}
+
+step <- function(cbm_vars) {
+  with(cbm_exn_model$initialize(config_path = NULL) %as% cbm, {
+    cbm_vars <- cbm$step(cbm_vars)
+    return(cbm_vars)
+  })
+}
+
+net_increments <- read.csv(
+  file.path(
+    libcbm_resources$get_test_resources_dir(),
+    "cbm_exn_net_increments",
+    "net_increments.csv"
+  )
+)
+
+colnames(net_increments) <- c("age", "merch_inc", "foliage_inc", "other_inc")
+stand_increments <- NULL
+n_stands <- 1000
+for (i in 0:(n_stands - 1)) { ## indexing in python starts at zero
+  copied_increments <- data.frame(net_increments)
+  copied_increments <- cbind(data.frame(row_idx = i), copied_increments)
+  stand_increments <- rbind(stand_increments, copied_increments)
+}
+
+spinup_parameters <- data.frame(
+  age = sample(0L:60L, n_stands, replace = TRUE),
+  area = rep(1.0, n_stands),
+  delay = rep(0L, n_stands),
+  return_interval = rep(125L, n_stands),
+  min_rotations = rep(10L, n_stands),
+  max_rotations = rep(30L, n_stands),
+  spatial_unit_id = rep(17L, n_stands), # Ontario/Mixedwood plains
+  species = rep(20L, n_stands), # red pine
+  mean_annual_temperature = rep(2.55, n_stands),
+  historical_disturbance_type = rep(1L, n_stands),
+  last_pass_disturbance_type = rep(1L, n_stands)
+)
+
+## run spinup
+cbm_vars <- spinup(
+  ## this is an R function that creates a python dictionary
+  dict(
+    parameters = spinup_parameters,
+    increments = stand_increments
+  )
+)
+
+## run 50 timesteps
+
+##TODO Not sure what this does - speculating: the python-side puts all the
+##results together and this goes and gets them there?
+out_processor <- output_processor$ModelOutputProcessor()
+for (t in 1:50) {
+  cbm_vars$parameters$mean_annual_temperature <- 2.55
+  cbm_vars$parameters$disturbance_type <- sample(
+    c(0L, 1L, 4L), n_stands,
+    replace = TRUE, prob = c(0.98, 0.01, 0.01)
+  )
+
+  # look up the original increments and join to the current stand age
+  step_increments <- join(
+    x = data.frame(age = cbm_vars$state$age),
+    y = net_increments,
+    by = "age"
+  )
+
+  # since some of the ages are out of range for the defined
+  # data, set the increments to 0
+  step_increments$merch_inc[is.na(step_increments$merch_inc)] <- 0
+  step_increments$foliage_inc[is.na(step_increments$foliage_inc)] <- 0
+  step_increments$other_inc[is.na(step_increments$other_inc)] <- 0
+
+  # assign the merged increments to the parameters data.frame
+  cbm_vars$parameters$merch_inc <- step_increments$merch_inc
+  cbm_vars$parameters$foliage_inc <- step_increments$foliage_inc
+  cbm_vars$parameters$other_inc <- step_increments$other_inc
+  cbm_vars <- step(cbm_vars)
+
+  out_processor$append_results(t, model_variables$ModelVariables$from_pandas(cbm_vars))
+}
+
+results <- out_processor$get_results()
+
+## convert results to R data.frames
+pools <- results["pools"]$to_pandas()
+flux <- results["flux"]$to_pandas()
+parameters <- results["parameters"]$to_pandas()
+state <- results["state"]$to_pandas()
+
+pools
+
+state
+```
