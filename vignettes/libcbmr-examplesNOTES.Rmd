@@ -48,10 +48,10 @@ output_processor <- libcbm_output_processor()
 ## This function is making a cbm object (confirm?). This object will be used as t=0 in
 ## annual calculations
 spinup <- function(spinup_input) {
-  # with config_path NULL default CBM-CFS3 derived parameters are used
-  ## assign the config path here for the cbm_exn_model$initialize method. That
-  ## will set a path from where all of the parameters will be read from, and if
-  ## it's not specified it will pull these parameters from
+  ## with config_path NULL (line 112) default CBM-CFS3 derived parameters are
+  ## used, assign the config path here for the cbm_exn_model$initialize method.
+  ## That will set a path from where all of the parameters will be read from,
+  ## and if it's not specified it will pull these parameters from
   ## https://github.com/cat-cfs/libcbm_py/tree/main/libcbm/resources/cbm_exn if
   ## you make your own directory with these same files you will override the
   ## defaults.
@@ -65,16 +65,17 @@ spinup <- function(spinup_input) {
   ## disturburbance_matrix_association.csv(12753X4)  - this is a match to
   ## outDefaults$cbmData@disturbanceMatrixAssociation (6082X3) plus one column
   ## named "sw_hw" associating a sw or hw to each diturbance_matrix_id
-  ##TODO why is csv not 2X the cbmData?
+  ##TODO Scott? why is csv not 2X the cbmData?
   
   ## disturbance_matrix_value.csv (14793X4) - this is a match
-  ## outDefaults$cbmData@disturbanceMatrixValues (21339X4) ecept that insteads
-  ## of "ids" (source_pool_id sink_pool_id), the source_pool and sin_pool are
+  ## outDefaults$cbmData@disturbanceMatrixValues (21339X4) except that instead
+  ## of "ids" (source_pool_id sink_pool_id), the source_pool and sink_pool are
   ## named in disturbance_matrix_value.csv.
   
   ## flux.json file does not have an equivalent in sim$cbmData as it defines the
   ## fluxes (from where to where). It is probably built in the model_definition
-  ## python module and into the c++ functions in spadesCBM
+  ## python module and into the c++ functions in spadesCBM (##TODO Scott? is
+  ## this right?)
   
   ## pools.json is defined in CBMutils::.pooldef, right now pools.json does not
   ## have a softwood/hardwood split (fewer pools) then CBMutils::.pooldef, which
@@ -82,7 +83,7 @@ spinup <- function(spinup_input) {
 
   ## root_parameters.csv (1X8) - this partly matches
   ## myDefaults$cbmData@rootParameters (48X7). root_parameters.csv has one line
-  ## instead of repeating the same line for all SPUs, and has the
+  ## instead of repeating the same line for all SPUs, 
 
   ## biomass_to_carbon_rate (constant at 0.5) which is here
   ## myDefaults$cbmData@biomassToCarbonRate in spadesCBM (column names are a bit
@@ -118,6 +119,7 @@ spinup <- function(spinup_input) {
   })
 }
 
+## working through all processes
 step <- function(cbm_vars) {
   with(cbm_exn_model$initialize(config_path = NULL) %as% cbm, {
     cbm_vars <- cbm$step(cbm_vars)
@@ -125,6 +127,8 @@ step <- function(cbm_vars) {
   })
 }
 
+## in this example the increments are one curve (1-17 years old) with Merch
+## Foliage Other (all softwood)
 net_increments <- read.csv(
   file.path(
     libcbm_resources$get_test_resources_dir(),
