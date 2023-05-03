@@ -8,6 +8,7 @@ R interface to the carbon budget model library based on CBM-CFS3 (<https://githu
 
 ```r
 # install.packages("devtools")
+# devtools::install_dev_deps()
 devtools::install("~/GitHub/libcbmr") ## source package directory
 ```
 
@@ -86,7 +87,11 @@ install_libcbm(method = "conda", envname = envname)
 ## install python
 library(reticulate)
 
-pypath <- install_python()
+#pypath <- install_python()
+## instead of using reticulate to install python,
+## install manually from python.org
+## make note of the install location
+pypath <- Sys.which("python")
 
 envname <- "r-reticulate" ## default used by reticulate
 envpath <- reticulate:::virtualenv_path(envname)
