@@ -87,7 +87,8 @@ install_libcbm(method = "conda", envname = envname)
 ## install python
 library(reticulate)
 
-#pypath <- install_python()
+# pypath <- install_python(version = "3.11:latest")
+
 ## instead of using reticulate to install python,
 ## install manually from python.org
 ## make note of the install location
