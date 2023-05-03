@@ -90,7 +90,7 @@ library(reticulate)
 # pypath <- install_python(version = "3.11:latest")
 
 ## instead of using reticulate to install python,
-## install manually from python.org
+## install manually from https://www.python.org/downloads/
 ## make note of the install location
 pypath <- Sys.which("python")
 
