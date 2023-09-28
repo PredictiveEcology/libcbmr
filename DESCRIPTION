@@ -1,6 +1,6 @@
 Package: libcbmr
 Title: Interface to the Carbon Budget Model Library Based on CBM-CFS3
-Version: 0.0.0.9003
+Version: 0.0.0.9004
 Authors@R: c(
     person("Scott", "Morken", email = "scott.morken@nrcan-rncan.gc.ca", role = c("aut")),
     person("Celine", "Boisvenue", email = "celine.boisvenue@nrcan-rncan.gc.ca", role = c("aut")),
