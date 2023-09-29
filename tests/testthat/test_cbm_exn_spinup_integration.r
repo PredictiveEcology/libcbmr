@@ -1,9 +1,9 @@
 box::use(testthat[test_that, expect_equal])
 box::use(reticulate[reticulate_import = import, dict])
-box::use(spinup_module = ../../R/cbm_exn_spinup)
+box::use(cbm_exn = ../../R/cbm_exn)
 
 test_that(
-  "spinup basic integration test works", {
+  "cbm_exn spinup basic integration test works", {
     libcbm_resources <- reticulate_import("libcbm.resources")
     net_increments <- read.csv(
       file.path(
@@ -67,7 +67,7 @@ test_that(
       )
     )
     out_dir <- tempdir()
-    cbm_vars <- spinup_module$cbm_exn_spinup(
+    cbm_vars <- cbm_exn$cbm_exn_spinup(
       dict(
         parameters = spinup_parameters,
         increments = stand_increments
