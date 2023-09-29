@@ -33,7 +33,7 @@ cbm_exn_spinup <- function(
 
   include_spinup_debug <- !is.null(spinup_debug_output_dir)
   with(cbm_exn_model$initialize(
-    parameters=parameters,
+    parameters = parameters,
     include_spinup_debug = include_spinup_debug
   ) %as% cbm, {
     cbm_vars <- cbm$spinup(spinup_input)
