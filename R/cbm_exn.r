@@ -1,4 +1,5 @@
 
+
 #' Run the cbm_exn spinup routine which initializes
 #' C pools and state for simulations
 #'
@@ -45,6 +46,20 @@ cbm_exn_spinup <- function(
         write.csv(spinup_debug_output[[name]], out_path)
       }
     }
+    return(cbm_vars)
+  })
+}
+
+#' Run all C dynamics for one timestep
+#' @export
+cbm_exn_step <- function(cbm_vars, parameters) {
+  box::use(reticulate[reticulate_import = import, `%as%`])
+
+  # import python packages
+  cbm_exn_model <- reticulate_import("libcbm.model.cbm_exn.cbm_exn_model")
+
+  with(cbm_exn_model$initialize(parameters = parameters) %as% cbm, {
+    cbm_vars <- cbm$step(cbm_vars)
     return(cbm_vars)
   })
 }
