@@ -39,41 +39,19 @@ test_that(
       historical_disturbance_type = rep(1L, n_stands),
       last_pass_disturbance_type = rep(1L, n_stands)
     )
-    param_path <- libcbm_resources$get_cbm_exn_parameters_dir()
 
-    cbm_exn_parameters <- dict(
-      # TODO: need a solution for loading json that works correctly
-      # for pools and flux configs
-      slow_mixing_rate = read.csv(
-        file.path(param_path, "slow_mixing_rate.csv")
-      ),
-      turnover_parameters = read.csv(
-        file.path(param_path, "turnover_parameters.csv")
-      ),
-      species = read.csv(
-        file.path(param_path, "species.csv")
-      ),
-      root_parameters = read.csv(
-        file.path(param_path, "root_parameters.csv")
-      ),
-      decay_parameters = read.csv(
-        file.path(param_path, "decay_parameters.csv")
-      ),
-      disturbance_matrix_value = read.csv(
-        file.path(param_path, "disturbance_matrix_value.csv")
-      ),
-      disturbance_matrix_association = read.csv(
-        file.path(param_path, "disturbance_matrix_association.csv")
-      )
-    )
+
     out_dir <- tempdir()
+    spinup_input <- dict(
+      parameters = spinup_parameters,
+      increments = stand_increments
+    )
+    default_ops <- cbm_exn$cbm_exn_spinup_ops(
+      spinup_input, cbm_exn_parameters
+    )
+    default_op_sequence <- cbm_exn$cbm_exn_get_spinup_op_sequence()
     cbm_vars <- cbm_exn$cbm_exn_spinup(
-      dict(
-        parameters = spinup_parameters,
-        increments = stand_increments
-      ),
-      cbm_exn_parameters,
-      spinup_debug_output_dir = out_dir
+      spinup_input
     )
     pool_out_exists <- file.exists(file.path(out_dir, "pools.csv"))
     testthat::expect_true(pool_out_exists)
