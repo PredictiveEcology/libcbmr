@@ -20,29 +20,7 @@ test_that(
     flux_names <- lapply(flux, function(x) x["name"])
     n_stands <- 2L
 
-    cbm_exn_parameters <- dict(
-      slow_mixing_rate = read.csv(
-        file.path(param_path, "slow_mixing_rate.csv")
-      ),
-      turnover_parameters = read.csv(
-        file.path(param_path, "turnover_parameters.csv")
-      ),
-      species = read.csv(
-        file.path(param_path, "species.csv")
-      ),
-      root_parameters = read.csv(
-        file.path(param_path, "root_parameters.csv")
-      ),
-      decay_parameters = read.csv(
-        file.path(param_path, "decay_parameters.csv")
-      ),
-      disturbance_matrix_value = read.csv(
-        file.path(param_path, "disturbance_matrix_value.csv")
-      ),
-      disturbance_matrix_association = read.csv(
-        file.path(param_path, "disturbance_matrix_association.csv")
-      )
-    )
+    default_params <- cbm_exn$cbm_exn_get_default_parameters()
     cbm_vars <- cbm_exn_variables$init_cbm_vars(
       n_stands, pools, flux_names, backends$BackendType$pandas
     )
@@ -71,8 +49,19 @@ test_that(
     cbm_vars$state[, "last_disturbance_type"] <- 0L
     cbm_vars$state[, "enabled"] <- 1L
 
+    step_ops <- cbm_exn$cbm_exn_step_ops(cbm_vars, default_params)
+    step_ops_sequence <- cbm_exn$cbm_exn_get_step_ops_sequence()
+    step_dist_ops_sequence <- (
+      cbm_exn$cbm_exn_get_step_disturbance_ops_sequence()
+    )
     testthat::expect_equal(nrow(cbm_vars$pools), n_stands)
-    cbm_vars <- cbm_exn$cbm_exn_step(cbm_vars, cbm_exn_parameters)
+    cbm_vars <- cbm_exn$cbm_exn_step(
+      cbm_vars,
+      step_ops,
+      step_dist_ops_sequence,
+      step_ops_sequence,
+      default_params
+    )
     testthat::expect_equal(nrow(cbm_vars$pools), n_stands)
   }
 )
