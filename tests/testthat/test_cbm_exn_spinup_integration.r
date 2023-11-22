@@ -35,23 +35,29 @@ test_that(
       max_rotations = rep(30L, n_stands),
       spatial_unit_id = rep(17L, n_stands), # Ontario/Mixedwood plains
       species = rep(20L, n_stands), # red pine
+      sw_hw = rep(0L, n_stands),
       mean_annual_temperature = rep(2.55, n_stands),
       historical_disturbance_type = rep(1L, n_stands),
       last_pass_disturbance_type = rep(1L, n_stands)
     )
-
 
     out_dir <- tempdir()
     spinup_input <- dict(
       parameters = spinup_parameters,
       increments = stand_increments
     )
+    default_params <- cbm_exn$cbm_exn_get_default_parameters()
+
     default_ops <- cbm_exn$cbm_exn_spinup_ops(
-      spinup_input, cbm_exn_parameters
+      spinup_input, default_params
     )
     default_op_sequence <- cbm_exn$cbm_exn_get_spinup_op_sequence()
     cbm_vars <- cbm_exn$cbm_exn_spinup(
-      spinup_input
+      spinup_input,
+      default_ops,
+      default_op_sequence,
+      default_params,
+      out_dir
     )
     pool_out_exists <- file.exists(file.path(out_dir, "pools.csv"))
     testthat::expect_true(pool_out_exists)
