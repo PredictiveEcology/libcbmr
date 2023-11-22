@@ -43,7 +43,7 @@ cbm_exn_get_default_parameters <- function() {
 
 #' Get the default spinup ops
 #' @export
-cbm_exn_spinup_ops <- function(spinup_input, parameters){
+cbm_exn_spinup_ops <- function(spinup_input, parameters) {
   box::use(reticulate[reticulate_import = import])
   cbm_exn_spinup <- reticulate_import("libcbm.model.cbm_exn.cbm_exn_spinup")
   cbm_exn_parameters <- reticulate_import(
@@ -67,7 +67,7 @@ cbm_exn_spinup_ops <- function(spinup_input, parameters){
 #' get the default spinup op sequence names
 #' @return list of strings - list of the names of the default spinup ops
 #' @export
-cbm_exn_get_spinup_op_sequence <- function(){
+cbm_exn_get_spinup_op_sequence <- function() {
   box::use(reticulate[reticulate_import = import])
   cbm_exn_spinup <- reticulate_import("libcbm.model.cbm_exn.cbm_exn_spinup")
 
@@ -105,7 +105,7 @@ cbm_exn_spinup <- function(
   model_variables <- reticulate_import(
     "libcbm.model.model_definition.model_variables"
   )
-  
+
   output_processor <- reticulate_import(
     "libcbm.model.model_definition.output_processor"
   )
@@ -131,7 +131,7 @@ cbm_exn_spinup <- function(
     if (do_spinup_debug) {
       spinup_debug_output <- cbm$get_spinup_output()$to_pandas()
       for (name in names(spinup_debug_output)) {
-        out_path = file.path(
+        out_path <- file.path(
           spinup_debug_output_dir, paste(name, "csv", sep = ".")
         )
         write.csv(spinup_debug_output[[name]], out_path)
@@ -145,7 +145,7 @@ cbm_exn_spinup <- function(
 #' get the default step op sequence names
 #' @return list of strings - list of the names of the default step ops
 #' @export
-cbm_exn_get_step_ops_sequence <- function(){
+cbm_exn_get_step_ops_sequence <- function() {
   box::use(reticulate[reticulate_import = import])
   cbm_exn_step <- reticulate_import("libcbm.model.cbm_exn.cbm_exn_step")
   step_ops_sequence <- cbm_exn_step$get_default_annual_process_op_sequence()
@@ -153,9 +153,10 @@ cbm_exn_get_step_ops_sequence <- function(){
 }
 
 #' get the default step op sequence names for disturbances
-#' @return list of strings - list of the names of the default disturbance step ops
+#' @return list of strings - list of the names of the default disturbance
+#' step ops
 #' @export
-cbm_exn_get_step_disturbance_ops_sequence <- function(){
+cbm_exn_get_step_disturbance_ops_sequence <- function() {
   box::use(reticulate[reticulate_import = import])
   cbm_exn_step <- reticulate_import("libcbm.model.cbm_exn.cbm_exn_step")
   step_disturbance_ops_sequence  <- (
@@ -194,7 +195,7 @@ cbm_exn_step_ops <- function(cbm_vars, parameters) {
     param_object,
     model_variables$ModelVariables$from_pandas(cbm_vars)
   )
-  return (step_ops)
+  return(step_ops)
 }
 
 #' Run all C dynamics for one timestep
