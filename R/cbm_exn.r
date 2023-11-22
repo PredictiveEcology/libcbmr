@@ -1,5 +1,3 @@
-
-
 #' Get the default parameters bundled with libcbm for running the cbm_exn
 #' package
 #' @export
