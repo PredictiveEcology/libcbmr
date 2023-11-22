@@ -1,10 +1,11 @@
 
 
-#' Get the default parameters bundled with libcbm for running the cbm_exn 
+#' Get the default parameters bundled with libcbm for running the cbm_exn
 #' package
 #' @export
 cbm_exn_get_default_parameters <- function() {
-  box::use(reticulate[reticulate_import = import])
+  box::use(reticulate[reticulate_import = import, dict])
+  box::use(utils[read.csv])
   cbm_exn_parameters <- reticulate_import(
     "libcbm.model.cbm_exn.cbm_exn_parameters"
   )
@@ -43,10 +44,22 @@ cbm_exn_get_default_parameters <- function() {
 #' Get the default spinup ops
 #' @export
 cbm_exn_spinup_ops <- function(spinup_input, parameters){
-  box::use(reticulate[reticulate_import = import, `%as%`])
+  box::use(reticulate[reticulate_import = import])
   cbm_exn_spinup <- reticulate_import("libcbm.model.cbm_exn.cbm_exn_spinup")
+  cbm_exn_parameters <- reticulate_import(
+    "libcbm.model.cbm_exn.cbm_exn_parameters"
+  )
+  model_variables <- reticulate_import(
+    "libcbm.model.model_definition.model_variables"
+  )
+  libcbm_resources <- reticulate_import("libcbm.resources")
+  param_object <- cbm_exn_parameters$parameters_factory(
+    dir = libcbm_resources$get_cbm_exn_parameters_dir(),
+    data = parameters
+  )
   spinup_ops <- cbm_exn_spinup$get_default_ops(
-    parameters, spinup_input
+    param_object,
+    model_variables$ModelVariables$from_pandas(spinup_input)
   )
   return(spinup_ops)
 }
@@ -57,6 +70,7 @@ cbm_exn_spinup_ops <- function(spinup_input, parameters){
 cbm_exn_get_spinup_op_sequence <- function(){
   box::use(reticulate[reticulate_import = import])
   cbm_exn_spinup <- reticulate_import("libcbm.model.cbm_exn.cbm_exn_spinup")
+
   spinup_ops_sequence <- cbm_exn_spinup$get_default_op_list()
   return(spinup_ops_sequence)
 }
@@ -75,34 +89,42 @@ cbm_exn_spinup <- function(
   spinup_input,
   spinup_ops,
   spinup_op_list,
+  parameters,
   spinup_debug_output_dir = NULL
 ) {
 
   box::use(utils[write.csv])
   box::use(reticulate[reticulate_import = import, `%as%`])
-
   # import python packages
   cbm_exn_model <- reticulate_import("libcbm.model.cbm_exn.cbm_exn_model")
   libcbm_resources <- reticulate_import("libcbm.resources")
   model_variables <- reticulate_import(
     "libcbm.model.model_definition.model_variables"
   )
-  cbm_exn_spinup <- reticulate_import("libcbm.model.cbm_exn.cbm_exn_spinup")
+  
   output_processor <- reticulate_import(
     "libcbm.model.model_definition.output_processor"
   )
+  cbm_exn_parameters <- reticulate_import(
+    "libcbm.model.cbm_exn.cbm_exn_parameters"
+  )
+  param_object <- cbm_exn_parameters$parameters_factory(
+    dir = libcbm_resources$get_cbm_exn_parameters_dir(),
+    data = parameters
+  )
+  do_spinup_debug <- !is.null(spinup_debug_output_dir)
 
-  include_spinup_debug <- !is.null(spinup_debug_output_dir)
   with(cbm_exn_model$initialize(
-    include_spinup_debug = include_spinup_debug
+    parameters, include_spinup_debug = do_spinup_debug
   ) %as% cbm, {
-    cbm_vars <- cbm_exn_spinup$spinup(
-      cbm,
+
+    cbm_vars <- cbm$spinup(
       spinup_input,
       ops = spinup_ops,
       op_sequence = spinup_op_list
     )
-    if (include_spinup_debug) {
+
+    if (do_spinup_debug) {
       spinup_debug_output <- cbm$get_spinup_output()$to_pandas()
       for (name in names(spinup_debug_output)) {
         out_path = file.path(
@@ -111,6 +133,7 @@ cbm_exn_spinup <- function(
         write.csv(spinup_debug_output[[name]], out_path)
       }
     }
+
     return(cbm_vars)
   })
 }
@@ -168,8 +191,8 @@ cbm_exn_step_ops <- function(cbm_vars, parameters) {
 cbm_exn_step <- function(
   cbm_vars,
   operations,
-  step_op_sequence,
-  disturbance_op_sequence
+  disturbance_op_sequence,
+  step_op_sequence
 ) {
   box::use(reticulate[reticulate_import = import, `%as%`])
 
@@ -188,10 +211,11 @@ cbm_exn_step <- function(
 
   # import python packages
   cbm_exn_model <- reticulate_import("libcbm.model.cbm_exn.cbm_exn_model")
-  cbm_exn_step <- reticulate_import("libcbm.model.cbm_exn.cbm_exn_step")
+
   with(cbm_exn_model$initialize(parameters = parameters) %as% cbm, {
-    cbm_vars <- cbm_exn_step$step(
-      cbm, cbm_vars, operations, )
+    cbm_vars <- cbm$step(
+      cbm_vars, operations, disturbance_op_sequence, step_op_sequence
+    )
     return(cbm_vars)
   })
 }
