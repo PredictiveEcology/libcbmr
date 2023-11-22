@@ -79,6 +79,10 @@ cbm_exn_get_spinup_op_sequence <- function(){
 #' C pools and state for simulations
 #'
 #' @param spinup_input a dictionary of spinup_parameters, spinup_increments
+#' @param spinup_ops the formatted matrix operations to apply
+#' @param spinup_op_list list of operation names to apply in spinup stepping
+#' (references spinup ops)
+#' @param parameters named list of default parameters for model initilization
 #' @param spinup_debug_output_dir optional path which defaults to NULL.
 #' If specified, the path is used to write debugging CSV files with full
 #' model state and variable details about spinup timesteps.
@@ -148,13 +152,18 @@ cbm_exn_get_step_ops_sequence <- function(){
   return(step_ops_sequence)
 }
 
+#' get the default step op sequence names for disturbances
+#' @return list of strings - list of the names of the default disturbance step ops
+#' @export
 cbm_exn_get_step_disturbance_ops_sequence <- function(){
   box::use(reticulate[reticulate_import = import])
   cbm_exn_step <- reticulate_import("libcbm.model.cbm_exn.cbm_exn_step")
   step_disturbance_ops_sequence  <- (
     cbm_exn_step$get_default_disturbance_op_sequence()
   )
-  return(step_disturbance_ops_sequence)
+  # list() is required for single element lists
+  # https://rstudio.github.io/reticulate/articles/calling_python.html#lists-tuples-and-dictionaries
+  return(list(step_disturbance_ops_sequence))
 }
 
 #' Get the default matrix operations for cbm_exn stepping as a list of matrices
@@ -169,13 +178,23 @@ cbm_exn_get_step_disturbance_ops_sequence <- function(){
 cbm_exn_step_ops <- function(cbm_vars, parameters) {
 
   box::use(reticulate[reticulate_import = import, `%as%`])
-
-  cbm_exn_step <- reticulate_import("libcbm.model.cbm_exn.cbm_exn_step")
-
-  step_ops <- cbm_exn_step$get_default_ops(
-    parameters, cbm_vars
+  cbm_exn_parameters <- reticulate_import(
+    "libcbm.model.cbm_exn.cbm_exn_parameters"
   )
-  return(step_ops)
+  model_variables <- reticulate_import(
+    "libcbm.model.model_definition.model_variables"
+  )
+  libcbm_resources <- reticulate_import("libcbm.resources")
+  param_object <- cbm_exn_parameters$parameters_factory(
+    dir = libcbm_resources$get_cbm_exn_parameters_dir(),
+    data = parameters
+  )
+  cbm_exn_step <- reticulate_import("libcbm.model.cbm_exn.cbm_exn_step")
+  step_ops <- cbm_exn_step$get_default_ops(
+    param_object,
+    model_variables$ModelVariables$from_pandas(cbm_vars)
+  )
+  return (step_ops)
 }
 
 #' Run all C dynamics for one timestep
@@ -183,35 +202,28 @@ cbm_exn_step_ops <- function(cbm_vars, parameters) {
 #' the simulation state and variables for the timestep
 #' @param operations list of formatted matrix operations
 #' to apply to the pools.
-#' @param step_op_sequence list of named disturbance
+#' @param disturbance_op_sequence list of named disturbance
 #' operations to apply to the pools referencing the
 #' values in the specified `operations`
-#' @param disturbance_op_sequence list
+#' @param step_op_sequence list of named annual process
+#' operations to apply to the pools referencing the
+#' values in the specified `operations`
+#' @param parameters named list of default parameter for model
+#' initialization
 #' @export
 cbm_exn_step <- function(
   cbm_vars,
   operations,
   disturbance_op_sequence,
-  step_op_sequence
+  step_op_sequence,
+  parameters
 ) {
   box::use(reticulate[reticulate_import = import, `%as%`])
 
-  # for the following 2 lines: list() is required for single element lists
-  # https://rstudio.github.io/reticulate/articles/calling_python.html#lists-tuples-and-dictionaries
-  step_op_sequence <- ifelse(
-    length(step_op_sequence) == 1,
-    list(step_op_sequence),
-    step_op_sequence
-  )
-  disturbance_op_sequence <- ifelse(
-    length(disturbance_op_sequence) == 1,
-    list(disturbance_op_sequence),
-    disturbance_op_sequence
-  )
-
   # import python packages
   cbm_exn_model <- reticulate_import("libcbm.model.cbm_exn.cbm_exn_model")
-
+  print(step_op_sequence)
+  print(disturbance_op_sequence)
   with(cbm_exn_model$initialize(parameters = parameters) %as% cbm, {
     cbm_vars <- cbm$step(
       cbm_vars, operations, disturbance_op_sequence, step_op_sequence
