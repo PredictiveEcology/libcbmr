@@ -276,6 +276,9 @@ for (year in times[[1]]:times[[2]]){
     by.x = c("cbm_record_id", "age"),
     by.y = c("record_idx", "age")
   )
+  annual_increments <- annual_increments[
+    order(annual_increments$cbm_record_id),
+  ]
 
   cbm_vars$parameters$mean_annual_temperature <- 1.0
   cbm_vars$parameters$disturbance_type <- unlist(
@@ -389,5 +392,5 @@ for (year in times[[1]]:times[[2]]){
 }
 
 terra::plot(
-  terra::rast(file.path("output", "npp_tC_per_ha_1998.tif"))
+  terra::rast(file.path("output", "total_eco_stocks_tC_per_ha_1998.tif"))
 )
