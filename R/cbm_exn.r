@@ -221,8 +221,6 @@ cbm_exn_step <- function(
 
   # import python packages
   cbm_exn_model <- reticulate_import("libcbm.model.cbm_exn.cbm_exn_model")
-  print(step_op_sequence)
-  print(disturbance_op_sequence)
   with(cbm_exn_model$initialize(parameters = parameters) %as% cbm, {
     cbm_vars <- cbm$step(
       cbm_vars, operations, disturbance_op_sequence, step_op_sequence
