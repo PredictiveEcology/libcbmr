@@ -1,18 +1,48 @@
+## NOTES: adjustments to Scott Morken's test running a small raster provided by
+## CBoisvenue and EMcIntire using paired down inputs from spadesCBM. Scott calls
+## libcbm (Python version 2.6.0) to complete the simulations. This is the
+## strating point from which CBoisvenue will rebuild spadesCBM to run with
+## libcbm instead of the C++ scripts in CBM_core.
+
+
+## It is important to set the virtual environment when calling Python scripts
+## from R. This does it:
+library(reticulate)
+virtualenv_list()
+#[1] "r-reticulate"
+reticulate::use_virtualenv("r-reticulate")
+reticulate::import("sys")$executable
+#[1] "C:\\Users\\cboisven\\DOCUME~1\\VIRTUA~1\\R-RETI~1\\Scripts\\python.exe"
+
+## This imports the libcbm Python scripts maintained by Scott Morken for the
+## CAT and checks the version.
+libcbm <- reticulate::import("libcbm")
+print(reticulate::py_get_attr(libcbm, "__version__"))
+#'2.6.0'
+
+## Scott modified a version of libcbmr that also needs to be loaded. This does
+## it.
+install.packages("remotes")
+remotes::install_github("smorken/libcbmr")
 library(libcbmr)
 
-spatial_inventory <- base::readRDS("spatialDT.rds")
-gc_hash <- base::readRDS("gcHash.rds")
+## Modifications to find inputs to the stand alone version CBM_core provided to
+## Scott from CBoisvenue
+inputsScott <- file.path(getwd(),"tests","Spatial_integration_test")
+spatial_inventory <- base::readRDS(file.path(inputsScott,"spatialDT.rds"))
+gc_hash <- base::readRDS(file.path(inputsScott,"gcHash.rds"))
+
 times <- list(start = 1998, end = 2000)
 
 disturbance_rasters <- {
   rasts <- terra::rast(
-    file.path(paste0("SaskDist_", times$start:times$end, ".grd"))
+    file.path(inputsScott,paste0("SaskDist_", times$start:times$end, ".grd"))
   )
   names(rasts) <- times$start:times$end
   rasts
 }
 
-ldsp_test_area <- terra::rast("ldSp_TestArea.tif")
+ldsp_test_area <- terra::rast(file.path(inputsScott,"ldSp_TestArea.tif"))
 
 #extract the growth increments from the nested environments
 gc_df <- NULL
