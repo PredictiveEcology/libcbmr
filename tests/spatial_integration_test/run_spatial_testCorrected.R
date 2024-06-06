@@ -167,7 +167,7 @@ spinup_data_cols <- c(
 
 # drop duplicated spinup records
 ###CELINE: not more duplications because the level3DT was used
-spinup_parameters_dedup <-  spinup_parameters[, "area" := NULL]
+spinup_parameters_dedup <-  spinup_parameters
 # spinup_parameters_dedup <- spinup_parameters[
 #   !duplicated(
 #     spinup_parameters[, c("pixelGroup", spinup_data_cols)]
