@@ -18,7 +18,7 @@ reticulate::import("sys")$executable
 ## CAT and checks the version.
 libcbm <- reticulate::import("libcbm")
 print(reticulate::py_get_attr(libcbm, "__version__"))
-#'2.6.0'
+#'2.6.6'
 
 ## Scott modified a version of libcbmr that also needs to be loaded. This does
 ## it.
@@ -188,7 +188,7 @@ spinup_parameters_dedup$spinup_record_idx <- as.integer(
 # )[c("spinup_record_idx", "pixelGroup.y")]
 # colnames(spinup_parameter_redup) <- c("spinup_record_idx", "pixelGroup")
 
-###HERE
+
 growth_increment_pre_merge <- data.frame(
   pixelGroup = spatial_inv_gc_merge$pixelGroup,
   gcid = spatial_inv_gc_merge$growth_curve_id,
@@ -252,4 +252,221 @@ cbm_vars <- libcbmr::cbm_exn_spinup(
   spinup_op_seq,
   libcbm_default_model_config
 )
-#####STOPPED HERE ERROR###############################
+#####END SPINUP###############################
+
+varsPostspinup <- cbm_vars
+
+# create a multi layer matrix of the input spatial layers
+spatial_data <- cbind(
+  as.matrix(ldsp_test_area),
+  as.matrix(disturbance_rasters)
+)
+
+# drop the row-wise duplicates of the above, so that we only simulate the
+# unique combinations
+spatial_data_dedup <- spatial_data[
+  !duplicated(spatial_data),
+]
+
+# merge the de-duplicated spatial data with the pixel group inventory
+cbm_simulation_records <- merge(
+  spatial_data_dedup,
+  spinup_parameters_dedup,
+  by.x = "ldSp_TestArea",
+  by.y = "pixelGroup"
+)
+
+# maintain a row identifier since subsequent merges may scramble the order
+cbm_simulation_records$cbm_record_id <- as.integer(
+  rownames(cbm_simulation_records)
+)
+
+cbm_simulation_records <- cbm_simulation_records[
+  c(
+    "ldSp_TestArea",
+    "1998",
+    "1999",
+    "2000",
+    "cbm_record_id",
+    "spinup_record_idx"
+  )
+]
+
+# add an order field for sorting post-merge
+spatial_data_merge <- cbind(order = 1:nrow(spatial_data), spatial_data)
+
+# create an array that can be used to expand the CBM simulation state and
+# variables to the raster space
+cbm_simulation_records_expand <- merge(
+  cbm_simulation_records,
+  spatial_data_merge,
+  by = c(
+    "ldSp_TestArea",
+    "1998",
+    "1999",
+    "2000"
+  ),
+  all.y = TRUE
+)
+
+# sort by order field
+cbm_simulation_records_expand <- cbm_simulation_records_expand[
+  order(cbm_simulation_records_expand$order),
+]
+
+#expand the simulation storage
+state <- cbm_vars$state[cbm_simulation_records$spinup_record_idx, ]
+
+pools <- cbm_vars$pools[cbm_simulation_records$spinup_record_idx, ]
+flux <- cbm_vars$flux[cbm_simulation_records$spinup_record_idx, ]
+parameters <- cbm_vars$parameters[cbm_simulation_records$spinup_record_idx, ]
+
+rownames(state) <- NULL
+state$record_idx <- as.integer(rownames(state))
+rownames(pools) <- NULL
+rownames(flux) <- NULL
+rownames(parameters) <- NULL
+
+cbm_vars <- list(
+  state = state,
+  pools = pools,
+  flux = flux,
+  parameters = parameters
+)
+
+cbm_increments <- merge(
+  cbm_simulation_records[c("cbm_record_id", "spinup_record_idx")],
+  growth_increments,
+  by.x = "spinup_record_idx",
+  by.y = "row_idx"
+)
+
+dir.create("output", showWarnings = FALSE)
+#for (year in times[[1]]:times[[2]]){
+### Just doing one year
+  annual_increments <- merge(
+    cbm_increments,
+    cbm_vars$state,
+    by.x = c("cbm_record_id", "age"),
+    by.y = c("record_idx", "age")
+  )
+  annual_increments <- annual_increments[
+    order(annual_increments$cbm_record_id),
+  ]
+
+  cbm_vars$parameters$mean_annual_temperature <- 1.0
+  cbm_vars$parameters$disturbance_type <- unlist(
+    unname(
+      cbm_simulation_records[as.character(1998)]
+    )
+  )
+
+  cbm_vars$parameters$merch_inc <- annual_increments$merch_inc
+  cbm_vars$parameters$foliage_inc <- annual_increments$foliage_inc
+  cbm_vars$parameters$other_inc <- annual_increments$other_inc
+
+  # set increments to 0 if the age ended up not being defined in the increments
+  # due to the age being out-of-range
+  cbm_vars$parameters$merch_inc[is.na(cbm_vars$parameters$merch_inc)] <- 0.0
+  cbm_vars$parameters$foliage_inc[is.na(cbm_vars$parameters$foliage_inc)] <- 0.0
+  cbm_vars$parameters$other_inc[is.na(cbm_vars$parameters$other_inc)] <- 0.0
+###HERE
+  step_ops <- libcbmr::cbm_exn_step_ops(cbm_vars, libcbm_default_model_config)
+
+  cbm_vars <- libcbmr::cbm_exn_step(
+    cbm_vars,
+    step_ops,
+    libcbmr::cbm_exn_get_step_disturbance_ops_sequence(),
+    libcbmr::cbm_exn_get_step_ops_sequence(),
+    libcbm_default_model_config
+  )
+
+  total_eco_stocks_tC_per_ha <- (
+    cbm_vars$pools$Merch
+    + cbm_vars$pools$Foliage
+    + cbm_vars$pools$Other
+    + cbm_vars$pools$CoarseRoots
+    + cbm_vars$pools$FineRoots
+    + cbm_vars$pools$AboveGroundVeryFastSoil
+    + cbm_vars$pools$BelowGroundVeryFastSoil
+    + cbm_vars$pools$AboveGroundFastSoil
+    + cbm_vars$pools$BelowGroundFastSoil
+    + cbm_vars$pools$MediumSoil
+    + cbm_vars$pools$AboveGroundSlowSoil
+    + cbm_vars$pools$BelowGroundSlowSoil
+    + cbm_vars$pools$StemSnag
+    + cbm_vars$pools$BranchSnag
+  )
+
+  npp_tC_per_ha <- (
+    cbm_vars$flux$DeltaBiomass_AG
+    + cbm_vars$flux$DeltaBiomass_BG
+    + cbm_vars$flux$TurnoverMerchLitterInput
+    + cbm_vars$flux$TurnoverFolLitterInput
+    + cbm_vars$flux$TurnoverOthLitterInput
+    + cbm_vars$flux$TurnoverCoarseLitterInput
+    + cbm_vars$flux$TurnoverFineLitterInput
+  )
+
+  write.csv(
+    cbm_vars$pools,
+    file.path("output", paste("pools_", as.character(year), ".csv", sep = ""))
+  )
+  write.csv(
+    cbm_vars$flux,
+    file.path("output", paste("flux_", as.character(year), ".csv", sep = ""))
+  )
+  write.csv(
+    cbm_vars$state,
+    file.path("output", paste("state_", as.character(year), ".csv", sep = ""))
+  )
+  write.csv(
+    cbm_vars$parameters,
+    file.path(
+      "output",
+      paste("parameters_", as.character(year), ".csv", sep = "")
+    )
+  )
+  spatial_age <- cbm_vars$state$age[
+    cbm_simulation_records_expand$cbm_record_id
+  ]
+  terra::writeRaster(
+    terra::rast(
+      matrix(spatial_age, nrow = 1900, byrow = TRUE)
+    ),
+    file.path("output", paste("age_", as.character(year), ".tif", sep = "")),
+    overwrite = TRUE
+  )
+  npp_tC_per_ha_spatial <- npp_tC_per_ha[
+    cbm_simulation_records_expand$cbm_record_id
+  ]
+  terra::writeRaster(
+    terra::rast(
+      matrix(npp_tC_per_ha_spatial, nrow = 1900, byrow = TRUE)
+    ),
+    file.path(
+      "output",
+      paste("npp_tC_per_ha_", as.character(year), ".tif", sep="")
+    ),
+    overwrite = TRUE
+  )
+  total_eco_stocks_tC_per_ha_spatial <- total_eco_stocks_tC_per_ha[
+    cbm_simulation_records_expand$cbm_record_id
+  ]
+  terra::writeRaster(
+    terra::rast(
+      matrix(total_eco_stocks_tC_per_ha_spatial, nrow = 1900, byrow = TRUE)
+    ),
+    file.path(
+      "output",
+      paste("total_eco_stocks_tC_per_ha_", as.character(year), ".tif", sep = "")
+    ),
+    overwrite = TRUE
+  )
+}
+
+terra::plot(
+  terra::rast(file.path("output", "total_eco_stocks_tC_per_ha_1998.tif"))
+)
+
+
