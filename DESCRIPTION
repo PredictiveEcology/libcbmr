@@ -1,6 +1,6 @@
 Package: libcbmr
 Title: Interface to the Carbon Budget Model Library Based on CBM-CFS3
-Version: 0.0.0.9008
+Version: 0.0.1.9000
 Authors@R: c(
     person("Scott", "Morken", email = "scott.morken@nrcan-rncan.gc.ca", role = c("aut")),
     person("Celine", "Boisvenue", email = "celine.boisvenue@nrcan-rncan.gc.ca", role = c("aut")),
@@ -26,7 +26,7 @@ Language: en-CA
 License: MPL-2.0 + file(LICENSE)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.3
 VignetteBuilder: knitr
 Config/reticulate:
   list(

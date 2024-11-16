@@ -2,8 +2,37 @@
 % Please edit documentation in R/package-libcbmr.R
 \docType{package}
 \name{libcbmr}
+\alias{libcbmr-package}
 \alias{libcbmr}
-\title{Interface to the Carbon Budget Model Library Based on CBM-CFS3}
+\title{libcbmr}
 \description{
-DESCRIPTION NEEDED
+Interface to the Carbon Budget Model Library Based on CBM-CFS3.
 }
+\section{Package options}{
+
+\itemize{
+\item \code{libcbmr.cbm_exn_parameters_dir}: User path to a directory of CBM-EXN parameters.
+\item \code{libcbmr.cbm_defaults_path}: User path to a CBM defaults SQLite database.
+}
+}
+
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://libcbmr.predictiveecology.org/}
+  \item \url{https://github.com/PredictiveEcology/libcbmr}
+}
+
+}
+\author{
+\strong{Maintainer}: Alex M Chubaty \email{achubaty@for-cast.ca} (\href{https://orcid.org/0000-0001-7146-8135}{ORCID})
+
+Authors:
+\itemize{
+  \item Scott Morken \email{scott.morken@nrcan-rncan.gc.ca}
+  \item Celine Boisvenue \email{celine.boisvenue@nrcan-rncan.gc.ca}
+  \item Eliot McIntire \email{eliot.mcintire@nrcan-rncan.gc.ca}
+}
+
+}
+\keyword{internal}
