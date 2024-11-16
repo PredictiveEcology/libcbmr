@@ -14,7 +14,8 @@ URL:
     https://github.com/PredictiveEcology/libcbmr
 Depends: R (>= 4.0)
 Imports:
-    reticulate
+    reticulate,
+    box
 Suggests:
     covr,
     knitr,
