@@ -1,11 +1,17 @@
-#' Interface to the Carbon Budget Model Library Based on CBM-CFS3
+#' libcbmr
 #'
-#' DESCRIPTION NEEDED
+#' Interface to the Carbon Budget Model Library Based on CBM-CFS3.
 #'
-#' @docType package
-#' @import reticulate
+#' @section Package options:
+#' \itemize{
+#'   \item `libcbmr.cbm_exn_parameters_dir`: User path to a directory of CBM-EXN parameters.
+#'   \item `libcbmr.cbm_defaults_path`: User path to a CBM defaults SQLite database.
+#' }
+#'
 #' @name libcbmr
-NULL
+#' @keywords internal
+#' @import reticulate
+"_PACKAGE"
 
 #.globals <- new.env(parent = emptyenv())
 # .globals$libcbm <- NULL

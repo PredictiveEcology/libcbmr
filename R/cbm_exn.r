@@ -2,13 +2,9 @@
 #' package
 #' @export
 cbm_exn_get_default_parameters <- function() {
-  box::use(reticulate[reticulate_import = import, dict])
+  box::use(reticulate[dict])
   box::use(utils[read.csv])
-  cbm_exn_parameters <- reticulate_import(
-    "libcbm.model.cbm_exn.cbm_exn_parameters"
-  )
-  libcbm_resources <- reticulate_import("libcbm.resources")
-  param_path <- libcbm_resources$get_cbm_exn_parameters_dir()
+  param_path <- get_cbm_exn_parameters_dir()
 
   params <- dict(
     # TODO: need a solution for loading json that works correctly
@@ -50,9 +46,8 @@ cbm_exn_spinup_ops <- function(spinup_input, parameters) {
   model_variables <- reticulate_import(
     "libcbm.model.model_definition.model_variables"
   )
-  libcbm_resources <- reticulate_import("libcbm.resources")
   param_object <- cbm_exn_parameters$parameters_factory(
-    dir = libcbm_resources$get_cbm_exn_parameters_dir(),
+    dir  = get_cbm_exn_parameters_dir(),
     data = parameters
   )
   spinup_ops <- cbm_exn_spinup$get_default_ops(
@@ -99,7 +94,6 @@ cbm_exn_spinup <- function(
   box::use(reticulate[reticulate_import = import, `%as%`])
   # import python packages
   cbm_exn_model <- reticulate_import("libcbm.model.cbm_exn.cbm_exn_model")
-  libcbm_resources <- reticulate_import("libcbm.resources")
   model_variables <- reticulate_import(
     "libcbm.model.model_definition.model_variables"
   )
@@ -110,14 +104,16 @@ cbm_exn_spinup <- function(
   cbm_exn_parameters <- reticulate_import(
     "libcbm.model.cbm_exn.cbm_exn_parameters"
   )
+  cbm_exn_dir <- get_cbm_exn_parameters_dir()
   param_object <- cbm_exn_parameters$parameters_factory(
-    dir = libcbm_resources$get_cbm_exn_parameters_dir(),
+    dir  = cbm_exn_dir,
     data = parameters
   )
   do_spinup_debug <- !is.null(spinup_debug_output_dir)
 
   with(cbm_exn_model$initialize(
-    parameters, include_spinup_debug = do_spinup_debug
+    parameters, include_spinup_debug = do_spinup_debug,
+    config_path = cbm_exn_dir
   ) %as% cbm, {
 
     cbm_vars <- cbm$spinup(
@@ -183,9 +179,8 @@ cbm_exn_step_ops <- function(cbm_vars, parameters) {
   model_variables <- reticulate_import(
     "libcbm.model.model_definition.model_variables"
   )
-  libcbm_resources <- reticulate_import("libcbm.resources")
   param_object <- cbm_exn_parameters$parameters_factory(
-    dir = libcbm_resources$get_cbm_exn_parameters_dir(),
+    dir  = get_cbm_exn_parameters_dir(),
     data = parameters
   )
   cbm_exn_step <- reticulate_import("libcbm.model.cbm_exn.cbm_exn_step")
@@ -221,7 +216,12 @@ cbm_exn_step <- function(
 
   # import python packages
   cbm_exn_model <- reticulate_import("libcbm.model.cbm_exn.cbm_exn_model")
-  with(cbm_exn_model$initialize(parameters = parameters) %as% cbm, {
+
+  cbm_exn_dir <- get_cbm_exn_parameters_dir()
+  with(cbm_exn_model$initialize(
+    parameters  = parameters,
+    config_path = get_cbm_exn_parameters_dir()
+  ) %as% cbm, {
     cbm_vars <- cbm$step(
       cbm_vars, operations, disturbance_op_sequence, step_op_sequence
     )
