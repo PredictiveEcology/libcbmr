@@ -1,6 +1,16 @@
 # libcbmr
 
-R interface to the carbon budget model library based on CBM-CFS3 (<https://github.com/cat-cfs/libcbm_py/tree/cbm_exn>).
+R interface to the [libcbm](https://github.com/cat-cfs/libcbm_py) carbon budget model library and CBM-EXN model based on CBM-CFS3.
+
+## CBM-EXN
+
+CBM-EXN is a CBM-CFS3 equivalent model driven by net C increments.
+
+- **Documentation**: https://github.com/cat-cfs/libcbm_py/blob/2.9.6/docs/cbm_exn.rst
+- **Examples**: https://github.com/cat-cfs/libcbm_py/tree/2.9.6/examples/cbm_exn
+- **Model**: https://github.com/cat-cfs/libcbm_py/tree/main/libcbm/model/cbm_exn
+- **Parameters**: https://github.com/cat-cfs/libcbm_py/tree/main/libcbm/resources/cbm_exn
+
 
 ## R package installation
 
