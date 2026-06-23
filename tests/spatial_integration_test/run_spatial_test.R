@@ -7,6 +7,10 @@
 
 ## It is important to set the virtual environment when calling Python scripts
 ## from R. This does it:
+
+library(reproducible) #install from CRAN if missing
+#you will need googledrive
+library(googledrive)
 library(reticulate)
 virtualenv_list()
 #[1] "r-reticulate"
@@ -16,15 +20,15 @@ reticulate::import("sys")$executable
 
 ## This imports the libcbm Python scripts maintained by Scott Morken for the
 ## CAT and checks the version.
-libcbm <- reticulate::import("libcbm")
-print(reticulate::py_get_attr(libcbm, "__version__"))
+# libcbm <- reticulate::import("libcbm")
+# print(reticulate::py_get_attr(libcbm, "__version__"))
 #'2.6.0'
 
 ## Scott modified a version of libcbmr that also needs to be loaded. This does
 ## it.
-install.packages("remotes")
-remotes::install_github("smorken/libcbmr")
-library(libcbmr)
+# install.packages("remotes")
+# remotes::install_github("smorken/libcbmr")
+devtools::load_all(".")
 
 ## Modifications to find inputs to the stand alone version CBM_core provided to
 ## Scott from CBoisvenue
@@ -42,7 +46,11 @@ disturbance_rasters <- {
   rasts
 }
 
-ldsp_test_area <- terra::rast(file.path(inputsScott,"ldSp_TestArea.tif"))
+ldsp_test_area <- reproducible::prepInputs(url = "https://drive.google.com/file/d/1eqRaj3txJBQHnMJ_WWLnUY-Gx5XAW69S/view?usp=drive_link",
+                                           destinationPath = "tests/spatial_integration_test/")
+#this object is actually 30 x 30 metres and has the correct number of pixels to match spatialDT
+disturbance_rasters <- reproducible::postProcess(disturbance_rasters, rasterToMatch = ldsp_test_area,
+                                                 method = "near")
 
 #extract the growth increments from the nested environments
 gc_df <- NULL
@@ -153,7 +161,7 @@ colnames(spinup_parameter_redup) <- c("spinup_record_idx", "pixelGroup")
 growth_increment_pre_merge <- data.frame(
   pixelGroup = spatial_inv_gc_merge$pixelGroup,
   gcid = spatial_inv_gc_merge$growth_curve_id,
-  sw_hw = as.integer(spatial_inv_gc_merge$is_sw)
+  sw_hw = as.integer(spatial_inv_gc_merge$is_sw) #this is already in spinup paramters
 )
 growth_increment_pre_merge <- growth_increment_pre_merge[
   !duplicated(growth_increment_pre_merge$pixelGroup),
@@ -238,12 +246,13 @@ cbm_simulation_records$cbm_record_id <- as.integer(
   rownames(cbm_simulation_records)
 )
 
+#TODO: figure out which pixelGroups are disturbed on the annual basis.
 cbm_simulation_records <- cbm_simulation_records[
   c(
     "ldSp_TestArea",
     "1998",
-    "1999",
-    "2000",
+    # "1999",
+    # "2000",
     "cbm_record_id",
     "spinup_record_idx"
   )
@@ -259,9 +268,9 @@ cbm_simulation_records_expand <- merge(
   spatial_data_merge,
   by = c(
     "ldSp_TestArea",
-    "1998",
-    "1999",
-    "2000"
+    "1998"#,
+    # "1999",
+    # "2000"
   ),
   all.y = TRUE
 )
